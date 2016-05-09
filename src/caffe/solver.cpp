@@ -59,6 +59,7 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
     InitTestNets();
     LOG(INFO) << "Solver scaffolding done.";
   }
+  layer_callbacks_.resize(net_->layers().size(), NULL);
   iter_ = 0;
   current_step_ = 0;
 }
@@ -219,7 +220,15 @@ void Solver<Dtype>::Step(int iters) {
     // accumulate the loss and gradient
     Dtype loss = 0;
     for (int i = 0; i < param_.iter_size(); ++i) {
-      loss += net_->ForwardBackward();
+      const vector<shared_ptr<Layer<Dtype> > >& layers = net_->layers();
+      for (int j = 0; j < layers.size(); ++j) {
+        Callback* layer_callback = layer_callbacks_[j];
+        if (layer_callback != NULL) {
+          layer_callback->on_start();
+        }
+        loss += net_->ForwardFromTo(j, j);
+      }
+      net_->Backward();
     }
     loss /= param_.iter_size();
     // average the loss across iterations for smoothed reporting

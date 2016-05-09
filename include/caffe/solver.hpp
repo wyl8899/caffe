@@ -87,6 +87,17 @@ class Solver {
   void add_callback(Callback* value) {
     callbacks_.push_back(value);
   }
+  void add_layer_callback(Callback* value, const string& layer_name) {
+    const vector<string>& layer_names = net_->layer_names();
+    vector<string>::const_iterator iter = std::find(
+        layer_names.begin(), layer_names.end(), layer_name);
+    if (iter != layer_names.end()) {
+      layer_callbacks_[iter - layer_names.begin()] = value;
+    } else {
+      LOG(WARNING) << "Add layer callback failed: Layer "
+        << layer_name << " does not exist.";
+    }
+  }
 
   void CheckSnapshotWritePermissions();
   /**
@@ -115,6 +126,7 @@ class Solver {
   shared_ptr<Net<Dtype> > net_;
   vector<shared_ptr<Net<Dtype> > > test_nets_;
   vector<Callback*> callbacks_;
+  vector<Callback*> layer_callbacks_;
   vector<Dtype> losses_;
   Dtype smoothed_loss_;
 
